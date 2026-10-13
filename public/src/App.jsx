@@ -5,6 +5,8 @@ function formatINR(val) {
   return "₹" + Number(val || 0).toLocaleString("en-IN")
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || ""
+
 export default function App() {
   const [farmers, setFarmers] = useState([])
   const [stats, setStats] = useState({ totalTons: 0, totalPaid: 0, totalPending: 0, farmerCount: 0 })
@@ -37,11 +39,12 @@ export default function App() {
     try {
       setLoading(true)
       const [farmersRes, statsRes] = await Promise.all([
-        fetch("/api/farmers"),
-        fetch("/api/stats"),
+        fetch(`${API_BASE}/api/farmers`),
+        fetch(`${API_BASE}/api/stats`),
       ])
-      const farmersData = await farmersRes.json()
-      const statsData = await statsRes.json()
+
+      const farmersData = farmersRes.ok ? await farmersRes.json() : { farmers: [] }
+      const statsData = statsRes.ok ? await statsRes.json() : { totalTons: 0, totalPaid: 0, totalPending: 0, farmerCount: 0 }
 
       setFarmers(farmersData.farmers || [])
       setStats(statsData)
@@ -62,11 +65,20 @@ export default function App() {
     setIsThinking(true)
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q }),
       })
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error("Backend API (/api/chat) not found. Vercel only hosts the frontend — please deploy the backend on Render/Railway or start local app.ts.")
+        }
+        const errText = await res.text()
+        throw new Error(`Server returned ${res.status}: ${errText}`)
+      }
+
       const data = await res.json()
       setMessages((prev) => [
         ...prev,
@@ -75,7 +87,7 @@ export default function App() {
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `⚠️ Failed to query assistant: ${err.message}` },
+        { role: "assistant", content: `⚠️ ${err.message}` },
       ])
     } finally {
       setIsThinking(false)
