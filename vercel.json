@@ -1,5 +1,0 @@
-{
-  "framework": "vite",
-  "buildCommand": "npm --prefix public run build",
-  "outputDirectory": "public/dist"
-}
