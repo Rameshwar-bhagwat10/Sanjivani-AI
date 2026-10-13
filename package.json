@@ -5,6 +5,7 @@
   "scripts": {
     "start": "tsx client.ts",
     "ui": "tsx app.ts",
+    "build": "npm --prefix public run build",
     "build:react": "npm --prefix public run build",
     "dev:react": "npm --prefix public run dev"
   },
