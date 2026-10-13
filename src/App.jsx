@@ -72,11 +72,14 @@ export default function App() {
       })
 
       if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error("Backend API (/api/chat) not found. Vercel only hosts the frontend — please deploy the backend on Render/Railway or start local app.ts.")
+        let errDetail = ""
+        try {
+          const errData = await res.json()
+          errDetail = errData.error || ""
+        } catch {
+          errDetail = await res.text()
         }
-        const errText = await res.text()
-        throw new Error(`Server returned ${res.status}: ${errText}`)
+        throw new Error(errDetail || `Server returned status ${res.status}`)
       }
 
       const data = await res.json()

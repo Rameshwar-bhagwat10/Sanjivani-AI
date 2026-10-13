@@ -8,6 +8,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["server.ts", "client.ts", "app.ts"],
-  "exclude": ["node_modules", "public"]
+  "include": ["server.ts", "client.ts", "app.ts", "api/**/*"],
+  "exclude": ["node_modules", "public", "dist"]
 }

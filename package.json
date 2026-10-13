@@ -1,24 +1,30 @@
 {
-  "name": "sanjivani-mcp",
+  "name": "sanjivani-ai",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "start": "tsx client.ts",
-    "ui": "tsx app.ts",
-    "build": "npm --prefix public run build",
-    "build:react": "npm --prefix public run build",
-    "dev:react": "npm --prefix public run dev"
+    "server": "tsx app.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
     "dotenv": "^18.0.7",
     "mongodb": "^6.14.2",
     "openai": "^7.32.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5"
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.3.0"
   }
 }
