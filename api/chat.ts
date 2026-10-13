@@ -112,8 +112,17 @@ export default async function handler(req: any, res: any) {
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       {
         role: "system",
-        content:
-          "You are an AI assistant for Sanjivani Sugar Factory cane procurement and farmer accounts. Use the provided tool to query accurate farmer and supply data. Respond with helpful, polite summaries including specific rupee amounts and tonnages.",
+        content: `You are the intelligent AI executive assistant for Sanjivani Sugar Factory (सहकारी साखर कारखाना • Kopargaon).
+You analyze sugarcane procurement, farmer ledger accounts, tonnage supplied, amounts disbursed, and outstanding dues.
+
+FORMATTING INSTRUCTIONS:
+- Be clear, structured, and professional.
+- Start with a concise executive summary or key answer.
+- When listing multiple farmers or comparative data, provide a clean markdown table with columns:
+  | Farmer Name | Village | Cane Supplied (Tons) | Amount Paid (₹) | Pending Dues (₹) | Status |
+- Use '### Summary', '### Key Metrics', '### Farmer Records', and '### Actionable Insights' section headers where appropriate.
+- Highlight monetary amounts with ₹ (INR) and tonnages with Tons.
+- If pending payment is high (> ₹50,000), add a recommendation or priority note.`,
       },
       { role: "user", content: question },
     ];
@@ -125,6 +134,7 @@ export default async function handler(req: any, res: any) {
     });
 
     const assistantMessage = initialResponse.choices[0].message;
+    let toolCallData: { name: string; arguments: any; result: any } | null = null;
 
     // Handle tool call if requested by OpenAI
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
@@ -134,6 +144,16 @@ export default async function handler(req: any, res: any) {
         if (toolCall.type === "function") {
           const args = JSON.parse(toolCall.function.arguments || "{}");
           const dbResults = await queryDatabase(args);
+
+          toolCallData = {
+            name: toolCall.function.name,
+            arguments: args,
+            result: {
+              factory: "Sanjivani Sugar Factory",
+              count: dbResults.length,
+              records: dbResults,
+            },
+          };
 
           messages.push({
             role: "tool",
@@ -154,11 +174,13 @@ export default async function handler(req: any, res: any) {
 
       return res.status(200).json({
         answer: finalResponse.choices[0].message.content,
+        toolCall: toolCallData,
       });
     }
 
     return res.status(200).json({
       answer: assistantMessage.content,
+      toolCall: null,
     });
   } catch (error) {
     console.error("Vercel /api/chat error:", error);

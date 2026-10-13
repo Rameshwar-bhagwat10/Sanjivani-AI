@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import AiStructuredOutput from './AiStructuredOutput'
 
 // Helper: Format INR currency
 function formatINR(val) {
@@ -15,12 +16,18 @@ export default function App() {
   const [villageFilter, setVillageFilter] = useState("ALL")
   const [activeTab, setActiveTab] = useState("assistant")
 
-  // Chat State
+  // Chat State with Rich Structured Assistant Messages
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content:
-        "Welcome to **Sanjivani Sugar Factory** portal. Ask any question about farmer sugarcane supplies, pending payments, or village-wise summaries.",
+      content: `### Sanjivani AI Executive Intelligence
+Welcome to **Sanjivani Sugar Factory** intelligent assistant. You can ask questions about cane procurement, farmer payments, pending dues, or village-wise supply statistics.
+
+### Quick Actions
+- Ask about **Kopargaon farmers** to see live supply records and payment breakdown
+- Check **Factory summary** for total crushed tonnage and disbursed payments
+- Find **High pending dues** (> ₹50,000) for recovery prioritization`,
+      toolCall: null,
     },
   ])
   const [inputQuery, setInputQuery] = useState("")
@@ -88,15 +95,33 @@ export default function App() {
       const data = await res.json()
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.answer || "No response received from assistant." },
+        {
+          role: "assistant",
+          content: data.answer || "No response received from assistant.",
+          toolCall: data.toolCall || null,
+        },
       ])
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `⚠️ ${err.message}` },
+        { role: "assistant", content: `⚠️ ${err.message}`, toolCall: null },
       ])
     } finally {
       setIsThinking(false)
+    }
+  }
+
+  // Handle click on village or farmer from AI output to sync with main ledger
+  function handleFilterFromAi({ village, search: querySearch }) {
+    if (village) {
+      setVillageFilter(village)
+    }
+    if (querySearch) {
+      setSearch(querySearch)
+    }
+    // On small / mobile screens, switch to farmers ledger tab
+    if (window.innerWidth < 1024) {
+      setActiveTab("farmers")
     }
   }
 
@@ -269,7 +294,16 @@ export default function App() {
             {messages.map((m, i) => (
               <div key={i} className={`chat-entry ${m.role === "user" ? "entry-user" : "entry-assistant"}`}>
                 <div className="avatar-icon">{m.role === "user" ? "👤" : "🤖"}</div>
-                <div className="speech-bubble" dangerouslySetInnerHTML={renderMarkdown(m.content)} />
+                {m.role === "user" ? (
+                  <div className="speech-bubble user-bubble">{m.content}</div>
+                ) : (
+                  <AiStructuredOutput
+                    content={m.content}
+                    toolCall={m.toolCall}
+                    onFilterLedger={handleFilterFromAi}
+                    onAskPrompt={(prompt) => handleSend(prompt)}
+                  />
+                )}
               </div>
             ))}
 
